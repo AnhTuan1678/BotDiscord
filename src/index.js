@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Client, IntentsBitField } from 'discord.js';
 import openai from './config/OpenAI.js';
 import dotenv from 'dotenv';
