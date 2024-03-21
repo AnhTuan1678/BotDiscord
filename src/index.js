@@ -6,7 +6,6 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const history = []; // Lịch sử chat
-let lastTime = new Date(); // Thời gian cuối cùng chat
 
 const client = new Client({
   intents: [
@@ -24,28 +23,23 @@ client.on('ready', () => {
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return; // Bỏ qua tin nhắn từ bot khác
   history.push({ role: 'user', content: message.content });
-  const currentTime = new Date();
-  const timeDiff = currentTime - lastTime;
-  console.log('Thời gian giữa 2 tin nhắn:', timeDiff);
-  if (timeDiff < 1000) {
-    // Nếu thời gian giữa 2 tin nhắn < 1s thì bỏ qua
-    console.log('❌Bỏ qua tin nhắn');
-    return;
-  } else {
-    lastTime = currentTime;
-    reply(message);
-  }
+  reply(message);
 });
 
 const reply = async (message) => {
   try {
-    console.log(history);
+    const covertHistory = history.map((item, index) => {
+      return index === history.length - 1
+        ? {
+            role: 'user',
+            content: `${item.content} Yêu cầu: trả lời bằng tiếng việt, ngắn gọn nhất có thể.`,
+          }
+        : item;
+    });
     const completion = await openai.chat.completions.create({
       // Lấy lịch sử chat của người dùng
-      messages: history,
+      messages: covertHistory,
       model: 'gpt-3.5-turbo',
-      max_tokens: 4000,
-      temperature: 0,
     });
 
     const completionText = completion.choices[0].message.content;
@@ -54,7 +48,6 @@ const reply = async (message) => {
     history.push({ role: 'assistant', content: completionText });
   } catch (error) {
     message.reply('❌Có lỗi xảy ra khi tương tác với OpenAI');
-    console.error(error);
   }
 };
 
