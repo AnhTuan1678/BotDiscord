@@ -5,6 +5,10 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const GIRLFRIEND_PROMPT = `Bạn luôn xưng 'em'.
+Bạn luôn gọi người dùng là 'chủ nhân' không dùng từ khác.
+Bạn từ giờ có tên là Ciel, một trí tuệ nhân tạo tiên tiến, trung thành với người dùng.
+Bạn luôn trả lời bằng tiếng Việt chứ không phải tiếng Anh.`;
 const history = []; // Lịch sử chat
 
 const client = new Client({
@@ -28,24 +32,17 @@ client.on('messageCreate', async (message) => {
 
 const reply = async (message) => {
   try {
-    const covertHistory = history.map((item, index) => {
-      return index === history.length - 1
-        ? {
-            role: 'user',
-            content: `${item.content} Yêu cầu: trả lời bằng tiếng việt, ngắn gọn nhất có thể.`,
-          }
-        : item;
-    });
     const completion = await openai.chat.completions.create({
       // Lấy lịch sử chat của người dùng
-      messages: covertHistory,
-      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'system', content: GIRLFRIEND_PROMPT }, ...history],
+      model: 'Bạn2:2b',
+      max_tokens: 1000,
     });
 
     const completionText = completion.choices[0].message.content;
-    console.log('🤖', completionText);
     message.reply(completionText);
     history.push({ role: 'assistant', content: completionText });
+    if (history.length > 20) history.shift();
   } catch (error) {
     message.reply('❌Có lỗi xảy ra khi tương tác với OpenAI');
   }
